@@ -1,0 +1,189 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Auto-generated Swagger",
+    "version": "1.0.0",
+    "description": "API documentation automatically generated using OpenAI GPT"
+  },
+  "paths": {
+    "cart/:id": {
+      "get": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "description": "این Id است که از طریق url ارسال می شود"
+            },
+            "required": true
+          },
+          {
+            "name": "user",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "این user هست که در query parameters قرار گرفته است"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "پاسخ موفق",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean",
+                      "description": "وضعیت درخواست"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "پیامی که در صورت خطا نمایش داده می شود"
+                    },
+                    "result": {
+                      "type": "object",
+                      "description": "داده هایی که قرار است بگیریم",
+                      "properties": {
+                        "_id": {
+                          "type": "string",
+                          "description": "آی‌دی"
+                        },
+                        "user": {
+                          "type": "string",
+                          "description": "کاربر"
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "نام"
+                        },
+                        "price": {
+                          "type": "number",
+                          "description": "قیمت"
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "summary": "Auto-generated from cart/:id"
+      }
+    },
+    "cart/": {
+      "get": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean",
+                      "description": "The status of the response"
+                    },
+                    "result": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "_id": {
+                            "type": "string",
+                            "description": "The ID of the cart"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "The name of the item in the cart"
+                          },
+                          "price": {
+                            "type": "integer",
+                            "description": "The price of the item in the cart"
+                          }
+                        },
+                        "required": [
+                          "_id",
+                          "name",
+                          "price"
+                        ]
+                      },
+                      "description": "The result array containing cart details"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "result"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean",
+                      "description": "The status of the response"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "The error message"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "summary": "Auto-generated from cart/"
+      }
+    }
+  },
+  "components": {
+    "schemas": {}
+  },
+  "validators": {}
+}

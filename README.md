@@ -1,16 +1,15 @@
 # Fastify GPT Swagger
 
-A Fastify plugin that automatically generates Swagger documentation and applies automatic validation using OpenAI GPT.
+A Fastify plugin for automatically generating Swagger documentation using GPT
 
 ## Features
 
-- Automatic Swagger documentation generation from Fastify routes
-- AI-powered code analysis and schema generation
-- Automatic request validation based on generated schemas
-- TypeScript support
-- Automatic or manual documentation generation
+- Automatic Swagger documentation generation from code
+- Support for plugins and routes
 - Swagger UI interface
-- Detailed and helpful error messages
+- Support for different GPT models
+- JSON error retry mechanism
+- Automatic parameter validation
 
 ## Installation
 
@@ -26,80 +25,45 @@ import fastifyGptSwagger from 'fastify-gpt-swagger'
 
 const app = fastify()
 
-// Register the plugin
-app.register(fastifyGptSwagger, {
-  openaiApiKey: 'your-openai-api-key',
-  openaiEndpoint: 'https://your-custom-endpoint.com/v1',
-  routesDir: './routes', // Path to routes directory (optional)
-  autoGenerate: true, // Auto-generate documentation (optional)
-  enableValidation: true // Enable automatic validation (optional)
+await app.register(fastifyGptSwagger, {
+  openaiApiKey: 'your-api-key',
+  routesDir: './routes', // Path to routes directory
+  pluginsDir: './src/plugins', // Path to plugins directory
+  gptModel: 'gpt-4', // GPT model to use
+  autoGenerate: true, // Auto-generate documentation
+  swaggerUiPath: '/docs', // Swagger UI path
+  enableValidation: true, // Enable validation
+  openaiEndpoint: 'https://api.openai.com/v1' // OpenAI API endpoint
 })
 
-// Your routes
-app.post('/users', async (request, reply) => {
-  const { name, age } = request.body
-  return { success: true }
-})
-
-// Access documentation
-// GET /docs/json - Get documentation as JSON
-// GET /docs - View documentation in Swagger UI
-
-app.listen({ port: 3000 })
+// Start server
+await app.listen({ port: 3000 })
 ```
 
-## Configuration
+## Options
 
 | Option | Type | Default | Description |
-|-------|-----|---------|----------|
-| openaiApiKey | string | - | OpenAI API key (required) |
-| routesDir | string | './routes' | Path to routes directory |
-| autoGenerate | boolean | false | Auto-generate documentation at runtime |
-| swaggerUiPath | string | '/docs' | Path to Swagger UI |
-| enableValidation | boolean | true | Enable automatic validation |
-| openaiEndpoint | string | undefined | Custom OpenAI API endpoint URL |
+|--------|------|---------|-------------|
+| `openaiApiKey` | `string` | - | OpenAI API key (required) |
+| `routesDir` | `string` | `./routes` | Path to routes directory |
+| `pluginsDir` | `string` | `./src/plugins` | Path to plugins directory |
+| `gptModel` | `string` | `gpt-4` | GPT model to use |
+| `autoGenerate` | `boolean` | `false` | Auto-generate documentation |
+| `swaggerUiPath` | `string` | `/docs` | Swagger UI path |
+| `enableValidation` | `boolean` | `true` | Enable validation |
+| `openaiEndpoint` | `string` | - | OpenAI API endpoint |
 
-## Manual Documentation Generation
-
-```typescript
-// Manual documentation generation
-const swaggerJson = await app.generateSwaggerFromRoutes()
-```
-
-## Automatic Validation
-
-This plugin automatically detects and applies validation rules for each route. For example:
+## Example
 
 ```typescript
-// Route with automatic validation
-app.post('/users', async (request, reply) => {
-  const { name, age } = request.body
-  return { success: true }
-})
-
-// Invalid request:
-// POST /users
-// { "name": "John" } // Error: age field is required
-// Response:
-// {
-//   "error": "Validation failed",
-//   "details": [
-//     "Body validation failed: must have required property 'age'"
-//   ]
-// }
-
-// Valid request:
-// POST /users
-// { "name": "John", "age": 25 } // Success
+// routes/user.ts
+export default async function (fastify) {
+  fastify.get('/user/:id', async (request, reply) => {
+    const { id } = request.params
+    return { id, name: 'John Doe' }
+  })
+}
 ```
-
-## How Validation Works
-
-1. The plugin analyzes route code
-2. Uses GPT to generate schemas and validation rules
-3. Creates a dedicated validator for each route
-4. Validates requests before execution
-5. Returns 400 error with details if validation fails
 
 ## License
 
