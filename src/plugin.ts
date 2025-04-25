@@ -1,19 +1,11 @@
 import fs from 'fs'
 import path from 'path'
-import { FastifyInstance, FastifyPluginOptions } from 'fastify'
+import { FastifyInstance, FastifyPluginOptions, FastifyPluginCallback } from 'fastify'
 import { OpenAI } from 'openai'
 import fastifySwagger from '@fastify/swagger'
 import fastifySwaggerUi from '@fastify/swagger-ui'
 import Ajv from 'ajv'
-
-interface PluginOptions {
-  openaiApiKey: string
-  routesDir?: string
-  autoGenerate?: boolean
-  swaggerUiPath?: string
-  enableValidation?: boolean
-  openaiEndpoint?: string
-}
+import { PluginOptions, FastifyGptSwagger } from './types'
 
 interface ValidationSchema {
   body?: any
@@ -179,7 +171,7 @@ ${handlerCode}
   }
 }
 
-async function fastifyGptSwagger(
+const fastifyGptSwagger: FastifyGptSwagger = async function (
   fastify: FastifyInstance,
   opts: FastifyPluginOptions & PluginOptions
 ) {
