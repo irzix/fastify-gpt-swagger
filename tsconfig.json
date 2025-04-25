@@ -10,5 +10,5 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "include": ["src", "test/routes", "test/plugins"]
+  "include": ["src"]
 }
