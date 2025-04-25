@@ -21,6 +21,13 @@ interface ValidationSchema {
   query?: any
 }
 
+// Add type declaration for the decorated Fastify instance
+declare module 'fastify' {
+  interface FastifyInstance {
+    generateSwaggerFromRoutes(): Promise<any>
+  }
+}
+
 function extractJsonFromText(text: string): any | null {
   const jsonMatch = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/)
   if (!jsonMatch) return null
@@ -192,7 +199,7 @@ async function fastifyGptSwagger(
   let swaggerJson: any = null
   let validators: any = null
 
-  // رجیستر کردن پلاگین‌های Swagger
+  // Register Swagger plugins
   await fastify.register(fastifySwagger, {
     openapi: {
       info: {
@@ -211,6 +218,7 @@ async function fastifyGptSwagger(
     staticCSP: true
   })
 
+  // Auto-generate documentation if enabled
   if (autoGenerate) {
     setImmediate(async () => {
       try {
@@ -224,7 +232,8 @@ async function fastifyGptSwagger(
     })
   }
 
-  fastify.decorate('generateSwaggerFromRoutes', async () => {
+  // Decorate Fastify instance with the method
+  fastify.decorate('generateSwaggerFromRoutes', async function() {
     try {
       const result = await scanRoutesAndGenerateSwagger({ routesDir, openaiApiKey, openaiEndpoint })
       swaggerJson = result
