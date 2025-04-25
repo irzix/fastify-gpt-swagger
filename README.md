@@ -29,6 +29,7 @@ const app = fastify()
 // Register the plugin
 app.register(fastifyGptSwagger, {
   openaiApiKey: 'your-openai-api-key',
+  openaiEndpoint: 'https://your-custom-endpoint.com/v1',
   routesDir: './routes', // Path to routes directory (optional)
   autoGenerate: true, // Auto-generate documentation (optional)
   enableValidation: true // Enable automatic validation (optional)
@@ -56,6 +57,7 @@ app.listen({ port: 3000 })
 | autoGenerate | boolean | false | Auto-generate documentation at runtime |
 | swaggerUiPath | string | '/docs' | Path to Swagger UI |
 | enableValidation | boolean | true | Enable automatic validation |
+| openaiEndpoint | string | undefined | Custom OpenAI API endpoint URL |
 
 ## Manual Documentation Generation
 
