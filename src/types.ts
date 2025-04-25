@@ -1,21 +1,16 @@
-import { FastifyPluginCallback } from 'fastify'
+import { FastifyPluginAsync } from 'fastify'
 
 export interface PluginOptions {
-  openaiApiKey: string
-  routesDir?: string
-  autoGenerate?: boolean
-  swaggerUiPath?: string
-  enableValidation?: boolean
-  openaiEndpoint?: string
+    openaiApiKey: string
+    routesDir: string
+    pluginsDir: string
+    autoGenerate?: boolean
+    swaggerUiPath?: string
+    enableValidation?: boolean
+    openaiEndpoint?: string
 }
 
-declare module 'fastify' {
-  interface FastifyInstance {
-    generateSwaggerFromRoutes(): Promise<any>
-  }
-}
-
-export type FastifyGptSwagger = FastifyPluginCallback<PluginOptions>
+export type FastifyGptSwagger = FastifyPluginAsync<PluginOptions>
 
 declare const fastifyGptSwagger: FastifyGptSwagger
 export default fastifyGptSwagger 
