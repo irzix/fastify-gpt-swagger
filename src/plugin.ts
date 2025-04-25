@@ -69,7 +69,7 @@ function createValidator(schema: ValidationSchema) {
 
 async function scanRoutesAndGenerateSwagger({ routesDir, openaiApiKey }: { routesDir: string, openaiApiKey: string }) {
   if (!fs.existsSync(routesDir)) {
-    throw new Error(`مسیر روت‌ها یافت نشد: ${routesDir}`)
+    throw new Error(`Routes directory not found: ${routesDir}`)
   }
 
   const files = fs.readdirSync(routesDir).filter(f => f.endsWith('.ts') || f.endsWith('.js'))
@@ -105,7 +105,7 @@ ${handlerCode}
 
       const result = extractJsonFromText(completion.choices[0].message.content || '')
       if (!result) {
-        console.warn(`❗ نتوانستم JSON را از پاسخ برای روت ${route} استخراج کنم`)
+        console.warn(`❗ Could not extract JSON from response for route ${route}`)
         continue
       }
 
@@ -148,7 +148,7 @@ ${handlerCode}
         }
       }
     } catch (error) {
-      console.error(`❌ خطا در پردازش روت ${route}:`, error)
+      console.error(`❌ Error processing route ${route}:`, error)
       continue
     }
   }
@@ -181,7 +181,7 @@ async function fastifyGptSwagger(
   } = opts
 
   if (!openaiApiKey) {
-    throw new Error('کلید API OpenAI الزامی است')
+    throw new Error('OpenAI API key is required')
   }
 
   let swaggerJson: any = null
@@ -212,9 +212,9 @@ async function fastifyGptSwagger(
         const result = await scanRoutesAndGenerateSwagger({ routesDir, openaiApiKey })
         swaggerJson = result
         validators = result.validators
-        console.log('✅ مستندات Swagger با موفقیت تولید شد')
+        console.log('✅ Swagger documentation generated successfully')
       } catch (error) {
-        console.error('❌ خطا در تولید خودکار مستندات:', error)
+        console.error('❌ Error in auto-generating documentation:', error)
       }
     })
   }
@@ -224,10 +224,10 @@ async function fastifyGptSwagger(
       const result = await scanRoutesAndGenerateSwagger({ routesDir, openaiApiKey })
       swaggerJson = result
       validators = result.validators
-      console.log('✅ مستندات Swagger با موفقیت تولید شد')
+      console.log('✅ Swagger documentation generated successfully')
       return swaggerJson
     } catch (error) {
-      console.error('❌ خطا در تولید مستندات:', error)
+      console.error('❌ Error generating documentation:', error)
       throw error
     }
   })
@@ -256,7 +256,7 @@ async function fastifyGptSwagger(
   fastify.get('/docs/json', async (request, reply) => {
     if (!swaggerJson) {
       return reply.code(503).send({ 
-        error: 'مستندات آماده نیست. لطفاً generateSwaggerFromRoutes() را اجرا کنید یا منتظر تولید خودکار بمانید.' 
+        error: 'Swagger documentation is not ready. Please call generateSwaggerFromRoutes() or wait for auto-generation.' 
       })
     }
     return swaggerJson

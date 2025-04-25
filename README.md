@@ -1,84 +1,84 @@
-# Fastify GPT Swagger TS
+# Fastify GPT Swagger
 
-یک پلاگین Fastify که به صورت خودکار مستندات Swagger را با استفاده از OpenAI GPT تولید می‌کند و ولیدیشن خودکار را نیز اعمال می‌کند.
+A Fastify plugin that automatically generates Swagger documentation and applies automatic validation using OpenAI GPT.
 
-## ویژگی‌ها
+## Features
 
-- تولید خودکار مستندات Swagger از روت‌های Fastify
-- استفاده از هوش مصنوعی برای تحلیل کد و تولید اسکیما
-- ولیدیشن خودکار درخواست‌ها بر اساس اسکیمای تولید شده
-- پشتیبانی از TypeScript
-- امکان تولید خودکار یا دستی مستندات
-- رابط کاربری Swagger UI
-- پیام‌های خطای دقیق و مفید
+- Automatic Swagger documentation generation from Fastify routes
+- AI-powered code analysis and schema generation
+- Automatic request validation based on generated schemas
+- TypeScript support
+- Automatic or manual documentation generation
+- Swagger UI interface
+- Detailed and helpful error messages
 
-## نصب
+## Installation
 
 ```bash
-npm install fastify-gpt-swagger-ts
+npm install fastify-gpt-swagger
 ```
 
-## استفاده
+## Usage
 
 ```typescript
 import fastify from 'fastify'
-import fastifyGptSwagger from 'fastify-gpt-swagger-ts'
+import fastifyGptSwagger from 'fastify-gpt-swagger'
 
 const app = fastify()
 
-// رجیستر کردن پلاگین
+// Register the plugin
 app.register(fastifyGptSwagger, {
   openaiApiKey: 'your-openai-api-key',
-  routesDir: './routes', // مسیر پوشه روت‌ها (اختیاری)
-  autoGenerate: true, // تولید خودکار مستندات (اختیاری)
-  enableValidation: true // فعال کردن ولیدیشن خودکار (اختیاری)
+  routesDir: './routes', // Path to routes directory (optional)
+  autoGenerate: true, // Auto-generate documentation (optional)
+  enableValidation: true // Enable automatic validation (optional)
 })
 
-// روت‌های شما
+// Your routes
 app.post('/users', async (request, reply) => {
   const { name, age } = request.body
   return { success: true }
 })
 
-// دسترسی به مستندات
-// GET /docs/json - دریافت مستندات به صورت JSON
-// GET /docs - مشاهده مستندات در Swagger UI
+// Access documentation
+// GET /docs/json - Get documentation as JSON
+// GET /docs - View documentation in Swagger UI
 
 app.listen({ port: 3000 })
 ```
 
-## تنظیمات
+## Configuration
 
-| گزینه | نوع | پیش‌فرض | توضیحات |
+| Option | Type | Default | Description |
 |-------|-----|---------|----------|
-| openaiApiKey | string | - | کلید API OpenAI (الزامی) |
-| routesDir | string | './routes' | مسیر پوشه روت‌ها |
-| autoGenerate | boolean | false | تولید خودکار مستندات در زمان اجرا |
-| swaggerUiPath | string | '/docs' | مسیر رابط کاربری Swagger |
-| enableValidation | boolean | true | فعال کردن ولیدیشن خودکار |
+| openaiApiKey | string | - | OpenAI API key (required) |
+| routesDir | string | './routes' | Path to routes directory |
+| autoGenerate | boolean | false | Auto-generate documentation at runtime |
+| swaggerUiPath | string | '/docs' | Path to Swagger UI |
+| enableValidation | boolean | true | Enable automatic validation |
 
-## تولید دستی مستندات
+## Manual Documentation Generation
 
 ```typescript
-// تولید دستی مستندات
+// Manual documentation generation
 const swaggerJson = await app.generateSwaggerFromRoutes()
 ```
 
-## ولیدیشن خودکار
+## Automatic Validation
 
-این پلاگین به صورت خودکار برای هر روت، قوانین ولیدیشن را تشخیص می‌دهد و اعمال می‌کند. برای مثال:
+This plugin automatically detects and applies validation rules for each route. For example:
 
 ```typescript
-// روت با ولیدیشن خودکار
+// Route with automatic validation
 app.post('/users', async (request, reply) => {
   const { name, age } = request.body
   return { success: true }
 })
 
-// درخواست نامعتبر:
+// Invalid request:
 // POST /users
-// { "name": "علی" } // خطا: فیلد age الزامی است
-// پاسخ:
+// { "name": "John" } // Error: age field is required
+// Response:
 // {
 //   "error": "Validation failed",
 //   "details": [
@@ -86,19 +86,19 @@ app.post('/users', async (request, reply) => {
 //   ]
 // }
 
-// درخواست معتبر:
+// Valid request:
 // POST /users
-// { "name": "علی", "age": 25 } // موفق
+// { "name": "John", "age": 25 } // Success
 ```
 
-## نحوه کار ولیدیشن
+## How Validation Works
 
-1. پلاگین کد روت‌ها را تحلیل می‌کند
-2. با استفاده از GPT، اسکیما و قوانین ولیدیشن را تولید می‌کند
-3. برای هر روت، یک ولیدیتور اختصاصی می‌سازد
-4. قبل از اجرای هر درخواست، ولیدیشن انجام می‌شود
-5. در صورت خطا، پاسخ با کد 400 و جزئیات خطا برگردانده می‌شود
+1. The plugin analyzes route code
+2. Uses GPT to generate schemas and validation rules
+3. Creates a dedicated validator for each route
+4. Validates requests before execution
+5. Returns 400 error with details if validation fails
 
-## مجوز
+## License
 
 MIT 
