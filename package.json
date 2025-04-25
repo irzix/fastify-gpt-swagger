@@ -1,6 +1,6 @@
 {
   "name": "fastify-gpt-swagger",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "Fastify plugin that automatically generates Swagger documentation and validation using OpenAI GPT",
   "main": "dist/plugin.js",
   "types": "dist/plugin.d.ts",
@@ -30,8 +30,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/irzix/fastify-gpt-swagger"
+    "url": "https://github.com/irzix/fastify-gpt-swagger.git"
   },
+  "bugs": {
+    "url": "https://github.com/irzix/fastify-gpt-swagger/issues"
+  },
+  "homepage": "https://github.com/irzix/fastify-gpt-swagger#readme",
   "dependencies": {
     "@fastify/swagger": "^9.5.0",
     "@fastify/swagger-ui": "^5.2.2",
