@@ -12,6 +12,7 @@ interface PluginOptions {
   autoGenerate?: boolean
   swaggerUiPath?: string
   enableValidation?: boolean
+  openaiEndpoint?: string
 }
 
 interface ValidationSchema {
@@ -67,7 +68,7 @@ function createValidator(schema: ValidationSchema) {
   }
 }
 
-async function scanRoutesAndGenerateSwagger({ routesDir, openaiApiKey }: { routesDir: string, openaiApiKey: string }) {
+async function scanRoutesAndGenerateSwagger({ routesDir, openaiApiKey, openaiEndpoint }: { routesDir: string, openaiApiKey: string, openaiEndpoint?: string }) {
   if (!fs.existsSync(routesDir)) {
     throw new Error(`Routes directory not found: ${routesDir}`)
   }
@@ -85,7 +86,10 @@ async function scanRoutesAndGenerateSwagger({ routesDir, openaiApiKey }: { route
     }
   }
 
-  const openai = new OpenAI({ apiKey: openaiApiKey })
+  const openai = new OpenAI({ 
+    apiKey: openaiApiKey,
+    baseURL: openaiEndpoint
+  })
   const swaggerPaths: Record<string, any> = {}
   const validators: Record<string, Record<string, (request: any) => string[]>> = {}
 
@@ -177,7 +181,8 @@ async function fastifyGptSwagger(
     routesDir = path.join(process.cwd(), 'routes'),
     autoGenerate = false,
     swaggerUiPath = '/docs',
-    enableValidation = true
+    enableValidation = true,
+    openaiEndpoint
   } = opts
 
   if (!openaiApiKey) {
@@ -209,7 +214,7 @@ async function fastifyGptSwagger(
   if (autoGenerate) {
     setImmediate(async () => {
       try {
-        const result = await scanRoutesAndGenerateSwagger({ routesDir, openaiApiKey })
+        const result = await scanRoutesAndGenerateSwagger({ routesDir, openaiApiKey, openaiEndpoint })
         swaggerJson = result
         validators = result.validators
         console.log('✅ Swagger documentation generated successfully')
@@ -221,7 +226,7 @@ async function fastifyGptSwagger(
 
   fastify.decorate('generateSwaggerFromRoutes', async () => {
     try {
-      const result = await scanRoutesAndGenerateSwagger({ routesDir, openaiApiKey })
+      const result = await scanRoutesAndGenerateSwagger({ routesDir, openaiApiKey, openaiEndpoint })
       swaggerJson = result
       validators = result.validators
       console.log('✅ Swagger documentation generated successfully')

@@ -1,9 +1,16 @@
 {
   "name": "fastify-gpt-swagger",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Fastify plugin that automatically generates Swagger documentation and validation using OpenAI GPT",
   "main": "dist/plugin.js",
   "types": "dist/plugin.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/plugin.d.ts",
+      "import": "./dist/plugin.js",
+      "require": "./dist/plugin.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "test": "jest",
