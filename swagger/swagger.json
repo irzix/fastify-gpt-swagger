@@ -25,7 +25,7 @@
             "in": "path",
             "schema": {
               "type": "string",
-              "description": "The ID of the cart"
+              "description": "Cart identifier"
             },
             "required": true
           },
@@ -34,7 +34,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "description": "The user associated with the cart"
+              "description": "User identifier"
             },
             "required": true
           }
@@ -85,7 +85,7 @@
             }
           },
           "400": {
-            "description": "Bad Request - user query parameter is missing",
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
@@ -108,7 +108,30 @@
             }
           },
           "401": {
-            "description": "Unauthorized - missing authorization header",
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
@@ -216,5 +239,7 @@
       }
     }
   },
-  "validators": {}
+  "validators": {
+    "/cart/:id": {}
+  }
 }
