@@ -73,6 +73,22 @@ async function getValidJsonFromGPT(openai: OpenAI, prompt: string, maxRetries: n
   throw lastError;
 }
 
+// تابع ولیدیشن برای چک کردن توکن
+function validateToken(request: any): string[] {
+    const errors: string[] = []
+    const authHeader = request.headers.authorization
+
+    if (!authHeader) {
+        errors.push('Authorization header is required')
+        return errors
+    }
+    
+    // اینجا می‌تونیم ولیدیشن‌های بیشتری اضافه کنیم
+    // مثلاً چک کردن فرمت توکن یا اعتبارسنجی آن
+
+    return errors
+}
+
 async function scanRoutesAndGenerateSwagger({
   routesDir,
   pluginsDir,
@@ -96,7 +112,7 @@ async function scanRoutesAndGenerateSwagger({
   async function findHandler(handlerName: string, baseDir: string): Promise<string | null> {
     console.log('🔍 Searching for handler:', handlerName)
     let searchCount = 0
-    const maxSearches = 100 // حداکثر تعداد جستجو
+    const maxSearches = 5
 
     // If handlerName starts with fastify., remove it
     const realHandlerName = handlerName.replace(/^fastify\./, '').trim()
@@ -114,13 +130,18 @@ async function scanRoutesAndGenerateSwagger({
                 const content = fs.readFileSync(file, 'utf-8')
 
                 // Look for decorated handlers in plugins
-                const decoratedMatch = content.match(new RegExp(`fastify\\.decorate\\s*\\(\\s*['"]${realHandlerName}['"]\\s*,\\s*(${realHandlerName})\\s*\\)`))
+                const decoratedMatch = content.match(new RegExp(`fastify\\.decorate\\s*\\(\\s*['"]${realHandlerName}['"]\\s*,\\s*([^,)]+)\\s*\\)`))
                 if (decoratedMatch) {
-                    console.log('✅ Found decorated handler in:', file)
+                    const [_, functionName] = decoratedMatch
+                    const cleanFunctionName = functionName.trim()
+                    console.log('✅ Found decorator for:', realHandlerName, 'with function name:', cleanFunctionName)
 
-                    // Find the function definition
-                    const functionStart = content.indexOf(`async function ${realHandlerName}`)
-                    if (functionStart === -1) continue
+                    // Now search for the function definition
+                    const functionStart = content.indexOf(`async function ${cleanFunctionName}`)
+                    if (functionStart === -1) {
+                        console.log('⚠️ Could not find function definition for:', cleanFunctionName)
+                        continue
+                    }
 
                     // Find the end of the function
                     let braceCount = 0
@@ -139,7 +160,7 @@ async function scanRoutesAndGenerateSwagger({
 
                     if (functionEnd > functionStart) {
                         const functionCode = content.slice(functionStart, functionEnd)
-                        console.log('✅ Found function definition for:', realHandlerName)
+                        console.log('✅ Found function definition for:', cleanFunctionName)
                         return functionCode
                     }
                 }
@@ -235,12 +256,20 @@ async function scanRoutesAndGenerateSwagger({
         const routeMatches = content.matchAll(/(?:fastify\.|\.)(get|post|put|delete|patch)(?:<.*?>)?\(['\"`](.*?)['\"`],\s*(?:async\s*)?(?:\(.*?\)\s*=>\s*\{[\s\S]*?\}|([^,)]+)\))/g)
 
         for (const match of routeMatches) {
+
           const [_, method, route, handlerName] = match
+
+          if(match.input.includes(`// fastify.${method}('${route}', ${handlerName})`) || match.input.includes(`// fastify.${method}('${route}',${handlerName})`)) {
+            console.log('🔍 Skipping route:', { method, route, handlerName })
+            continue;
+          }
+
           console.log('🔍 Found route:', { method, route, handlerName })
 
           // اگر handlerName وجود داشت، سعی کن handler رو پیدا کنی
           let finalHandlerCode = ''
           if (handlerName) {
+
             // استخراج نام واقعی هندلر از fastify.cartsGet
             const realHandlerName = handlerName.replace(/^fastify\./, '').trim()
 
@@ -318,6 +347,11 @@ async function scanRoutesAndGenerateSwagger({
               bearerAuth: []
             }
           ]
+        }
+        // اضافه کردن ولیدیشن توکن
+        validators[route] = {
+          ...validators[route],
+          [method]: (request: any) => validateToken(request)
         }
       }
       swaggerPaths[route] = {

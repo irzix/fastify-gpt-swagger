@@ -14,9 +14,10 @@ declare module "fastify" {
 
 export default fp(async (fastify, opts) => {
 
-    fastify.decorate('cartsGet', cartsGet)
-    fastify.decorate('cartsGetAll', cartsGetAll)
-    async function cartsGet(request: any, reply: any) {
+    fastify.decorate('cartsGet', cartsGetFunction);
+    fastify.decorate('cartsGetAll', cartsGetAll);
+
+    async function cartsGetFunction(request: any, reply: any) {
         try {
 
             if (!request.headers.authorization) {
