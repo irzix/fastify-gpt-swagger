@@ -25,7 +25,7 @@
             "in": "path",
             "schema": {
               "type": "string",
-              "description": "Identifier of the cart"
+              "description": "The ID of the cart"
             },
             "required": true
           },
@@ -34,14 +34,14 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "description": "User identifier"
+              "description": "The user associated with the cart"
             },
             "required": true
           }
         ],
         "responses": {
           "200": {
-            "description": "Successful response with cart details",
+            "description": "Successful response",
             "content": {
               "application/json": {
                 "schema": {
@@ -53,24 +53,24 @@
                     "result": {
                       "type": "object",
                       "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "price": {
-                          "type": "number"
-                        },
                         "_id": {
                           "type": "string"
                         },
                         "user": {
                           "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "price": {
+                          "type": "number"
                         }
                       },
                       "required": [
-                        "name",
-                        "price",
                         "_id",
-                        "user"
+                        "user",
+                        "name",
+                        "price"
                       ],
                       "additionalProperties": false
                     }
@@ -85,7 +85,7 @@
             }
           },
           "400": {
-            "description": "Missing required query parameter",
+            "description": "Bad Request - user query parameter is missing",
             "content": {
               "application/json": {
                 "schema": {
@@ -108,30 +108,7 @@
             }
           },
           "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "boolean"
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "message"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Error response",
+            "description": "Unauthorized - missing authorization header",
             "content": {
               "application/json": {
                 "schema": {
@@ -178,7 +155,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Successful response containing list of carts",
+            "description": "Successful response",
             "content": {
               "application/json": {
                 "schema": {
@@ -209,26 +186,6 @@
                         ],
                         "additionalProperties": false
                       }
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "result"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Error response when an exception occurs",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "boolean"
                     },
                     "message": {
                       "type": "string"
@@ -236,7 +193,7 @@
                   },
                   "required": [
                     "status",
-                    "message"
+                    "result"
                   ],
                   "additionalProperties": false
                 }
