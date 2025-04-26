@@ -1,5 +1,11 @@
 # Fastify GPT Swagger
 
+[![npm version](https://img.shields.io/npm/v/fastify-gpt-swagger.svg)](https://www.npmjs.com/package/fastify-gpt-swagger)
+[![license](https://img.shields.io/npm/l/fastify-gpt-swagger.svg)](LICENSE)
+[![downloads](https://img.shields.io/npm/dm/fastify-gpt-swagger.svg)](https://www.npmjs.com/package/fastify-gpt-swagger)
+[![Fastify Ecosystem](https://img.shields.io/badge/fastify-ecosystem-brightgreen.svg)](https://www.fastify.io/ecosystem/)
+
+
 A Fastify plugin for automatically generating Swagger documentation using GPT
 
 ## Features
@@ -53,6 +59,18 @@ await app.listen({ port: 3000 })
 | `openaiEndpoint` | `string` | - | OpenAI API endpoint |
 | `gptModel` | `string` | `gpt-4` | GPT model to use |
 
+
+## Contributing
+
+Contributions are welcome!  
+Feel free to open an issue or submit a pull request.
+
+Please make sure to run tests before submitting changes.
+
+## Related
+
+- [Fastify](https://fastify.io/)
+- [OpenAI API](https://platform.openai.com/)
 
 ## License
 
