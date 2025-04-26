@@ -14,7 +14,7 @@ app.register(fastifyGptSwagger, {
     openaiEndpoint: process.env.OPENAI_ENDPOINT,
     routesDir: 'test/routes',
     pluginsDir: 'test/plugins',
-    autoGenerate: true, // to enable Ai generate, set to true
+    autoGenerate: false, // to enable Ai generate, set to true
     enableValidation: true,
     swaggerUiPath: '/test-docs',
     gptModel: 'gpt-4.1-nano'
