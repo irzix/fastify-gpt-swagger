@@ -8,6 +8,7 @@ export interface PluginOptions {
     swaggerUiPath?: string
     enableValidation?: boolean
     openaiEndpoint?: string
+    gptModel?: string
 }
 
 export type FastifyGptSwagger = FastifyPluginAsync<PluginOptions>

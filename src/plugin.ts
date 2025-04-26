@@ -1,15 +1,10 @@
-import Ajv from 'ajv'
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 import fs from 'fs'
 import JSON5 from 'json5'
 import { OpenAI } from 'openai'
 import path from 'path'
 import { FastifyGptSwagger, PluginOptions } from './types'
-interface ValidationSchema {
-  body?: any
-  params?: any
-  query?: any
-}
+
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -43,65 +38,14 @@ function extractOpenAPISpec(text: string) {
   return { requestBody, parameters, responses };
 }
 
-function extractJsonFromText(text: string): any | null {
-  console.log('📝 Extracting JSON from text:', text)
-  const result = extractOpenAPISpec(text)
-  return result
-}
-
-function createValidator(schema: ValidationSchema) {
-  const ajv = new Ajv({ allErrors: true })
-  const validators = {
-    body: schema.body ? ajv.compile({
-      $schema: "http://json-schema.org/draft-07/schema#",
-      ...schema.body
-    }) : null,
-    params: schema.params ? ajv.compile({
-      $schema: "http://json-schema.org/draft-07/schema#",
-      ...schema.params
-    }) : null,
-    query: schema.query ? ajv.compile({
-      $schema: "http://json-schema.org/draft-07/schema#",
-      ...schema.query
-    }) : null
-  }
-
-  return (request: any) => {
-    const errors: string[] = []
-
-    if (validators.body && request.body) {
-      const valid = validators.body(request.body)
-      if (!valid) {
-        errors.push(`Body validation failed: ${ajv.errorsText(validators.body.errors)}`)
-      }
-    }
-
-    if (validators.params && request.params) {
-      const valid = validators.params(request.params)
-      if (!valid) {
-        errors.push(`Params validation failed: ${ajv.errorsText(validators.params.errors)}`)
-      }
-    }
-
-    if (validators.query && request.query) {
-      const valid = validators.query(request.query)
-      if (!valid) {
-        errors.push(`Query validation failed: ${ajv.errorsText(validators.query.errors)}`)
-      }
-    }
-
-    return errors
-  }
-}
-
-async function getValidJsonFromGPT(openai: OpenAI, prompt: string, maxRetries: number = 3): Promise<any> {
+async function getValidJsonFromGPT(openai: OpenAI, prompt: string, maxRetries: number = 3, gptModel: string = 'gpt-4'): Promise<any> {
   let retries = 0;
   let lastError = null;
 
   while (retries < maxRetries) {
     try {
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4',
+        model: gptModel,
         messages: [{ role: 'user', content: prompt }]
       });
 
@@ -109,13 +53,13 @@ async function getValidJsonFromGPT(openai: OpenAI, prompt: string, maxRetries: n
       if (result) {
         return result;
       }
-      
+
       throw new Error('Invalid JSON format');
     } catch (error) {
       lastError = error;
       retries++;
       console.log(`🔄 Retry ${retries}/${maxRetries} for generating valid JSON`);
-      
+
       if (retries < maxRetries) {
         // اضافه کردن دستورالعمل‌های بیشتر برای GPT
         prompt += '\n\nلطفاً دقت کنید که خروجی باید یک JSON معتبر باشد. از کاماهای درست استفاده کنید و از کوتیشن دوتایی برای کلیدها استفاده کنید.';
@@ -127,18 +71,18 @@ async function getValidJsonFromGPT(openai: OpenAI, prompt: string, maxRetries: n
   throw lastError;
 }
 
-async function scanRoutesAndGenerateSwagger({ 
-  routesDir, 
+async function scanRoutesAndGenerateSwagger({
+  routesDir,
   pluginsDir,
   gptModel,
-  openaiApiKey, 
-  openaiEndpoint 
-}: { 
+  openaiApiKey,
+  openaiEndpoint
+}: {
   routesDir: string;
   pluginsDir: string;
   gptModel: string;
-  openaiApiKey: string; 
-  openaiEndpoint?: string 
+  openaiApiKey: string;
+  openaiEndpoint?: string
 }) {
   if (!fs.existsSync(routesDir)) {
     throw new Error(`Routes directory not found: ${routesDir}`)
@@ -305,7 +249,7 @@ async function scanRoutesAndGenerateSwagger({
           // اضافه کردن روت به لیست
           endpoints.push({
             method,
-            route: path.join(baseRoute, route).replace(/\\/g, '/'),
+            route: '/' + path.join(baseRoute, route).replace(/\\/g, '/'),
             handlerCode: finalHandlerCode,
             schema
           })
@@ -410,7 +354,7 @@ async function scanRoutesAndGenerateSwagger({
 ${handlerCode}
       `
 
-      const result = await getValidJsonFromGPT(openai, prompt);
+      const result = await getValidJsonFromGPT(openai, prompt, 3, gptModel);
       swaggerPaths[route] = {
         [method]: {
           ...result,
@@ -482,20 +426,20 @@ const fastifyGptSwagger: FastifyGptSwagger = async function (
     console.log('🚀 Auto-generating Swagger documentation...')
     setImmediate(async () => {
       try {
-        const result = await scanRoutesAndGenerateSwagger({ 
-          routesDir, 
+        const result = await scanRoutesAndGenerateSwagger({
+          routesDir,
           pluginsDir,
           gptModel,
-          openaiApiKey, 
-          openaiEndpoint 
+          openaiApiKey,
+          openaiEndpoint
         })
         swaggerJson = result
         validators = result.validators
         console.log('✅ Swagger documentation generated successfully')
-        
+
         // Save the generated JSON
         await saveSwaggerJson(swaggerJson)
-        
+
       } catch (error) {
         console.error('❌ Error in auto-generating documentation:', error)
       }
@@ -537,7 +481,7 @@ const fastifyGptSwagger: FastifyGptSwagger = async function (
           error: 'Swagger documentation not found'
         })
       }
-      
+
       const swaggerContent = fs.readFileSync(swaggerPath, 'utf-8')
       return reply.type('application/json').send(swaggerContent)
     } catch (error) {
@@ -557,7 +501,7 @@ const fastifyGptSwagger: FastifyGptSwagger = async function (
           error: 'Swagger UI not found'
         })
       }
-      
+
       const htmlContent = fs.readFileSync(htmlPath, 'utf-8')
       return reply.type('text/html').send(htmlContent)
     } catch (error) {
