@@ -25,7 +25,7 @@
             "in": "path",
             "schema": {
               "type": "string",
-              "description": "شناسه سبد خرید"
+              "description": "Identifier of the cart"
             },
             "required": true
           },
@@ -34,14 +34,14 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "description": "شناسه کاربر (اجباری)"
+              "description": "User identifier"
             },
             "required": true
           }
         ],
         "responses": {
           "200": {
-            "description": "پاسخ موفق",
+            "description": "Successful response with cart details",
             "content": {
               "application/json": {
                 "schema": {
@@ -53,24 +53,24 @@
                     "result": {
                       "type": "object",
                       "properties": {
-                        "_id": {
-                          "type": "string"
-                        },
-                        "user": {
-                          "type": "string"
-                        },
                         "name": {
                           "type": "string"
                         },
                         "price": {
                           "type": "number"
+                        },
+                        "_id": {
+                          "type": "string"
+                        },
+                        "user": {
+                          "type": "string"
                         }
                       },
                       "required": [
-                        "_id",
-                        "user",
                         "name",
-                        "price"
+                        "price",
+                        "_id",
+                        "user"
                       ],
                       "additionalProperties": false
                     }
@@ -85,7 +85,30 @@
             }
           },
           "400": {
-            "description": "درخواست نامعتبر، اگر پارامتر user ارسال نشود",
+            "description": "Missing required query parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "application/json": {
                 "schema": {
@@ -108,7 +131,7 @@
             }
           },
           "500": {
-            "description": "خطای داخلی سرور",
+            "description": "Error response",
             "content": {
               "application/json": {
                 "schema": {
@@ -131,6 +154,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Auto-generated from /cart/:id"
       }
     },
@@ -150,7 +178,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "پاسخ موفق",
+            "description": "Successful response containing list of carts",
             "content": {
               "application/json": {
                 "schema": {
@@ -164,23 +192,43 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "id": {
+                          "_id": {
                             "type": "string"
                           },
                           "name": {
                             "type": "string"
                           },
                           "price": {
-                            "type": "integer"
+                            "type": "number"
                           }
                         },
                         "required": [
-                          "id",
+                          "_id",
                           "name",
                           "price"
                         ],
                         "additionalProperties": false
                       }
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "result"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response when an exception occurs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean"
                     },
                     "message": {
                       "type": "string"
@@ -188,7 +236,7 @@
                   },
                   "required": [
                     "status",
-                    "result"
+                    "message"
                   ],
                   "additionalProperties": false
                 }
@@ -201,7 +249,15 @@
     }
   },
   "components": {
-    "schemas": {}
+    "schemas": {},
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Authorization token"
+      }
+    }
   },
   "validators": {}
 }

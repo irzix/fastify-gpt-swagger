@@ -18,11 +18,20 @@ export default fp(async (fastify, opts) => {
     fastify.decorate('cartsGetAll', cartsGetAll)
     async function cartsGet(request: any, reply: any) {
         try {
+
+            if (!request.headers.authorization) {
+                return {
+                    status: false,
+                    message: 'Unauthorized'
+                };
+            }
+
+
             const _id = request.params.id
             const user = request.query.user
 
             if (!request.query.user) {
-                return reply.code(400).send({
+                return reply.status(400).send({
                     status: false,
                     message: 'user is required'
                 });
