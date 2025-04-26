@@ -94,83 +94,101 @@ async function scanRoutesAndGenerateSwagger({
 
   // تابع برای پیدا کردن handler از کدبیس
   async function findHandler(handlerName: string, baseDir: string): Promise<string | null> {
-    // اول در پوشه plugins جستجو کن
-    console.log('🔍 Searching in plugins directory:', pluginsDir)
+    console.log('🔍 Searching for handler:', handlerName)
+    let searchCount = 0
+    const maxSearches = 100 // حداکثر تعداد جستجو
 
-    if (fs.existsSync(pluginsDir)) {
-      const files = await getAllFiles(pluginsDir)
+    // If handlerName starts with fastify., remove it
+    const realHandlerName = handlerName.replace(/^fastify\./, '').trim()
 
-      for (const file of files) {
-        const content = fs.readFileSync(file, 'utf-8')
+    while (searchCount < maxSearches) {
+        searchCount++
+        console.log(`🔄 Search attempt ${searchCount}/${maxSearches}`)
 
-        // جستجو برای فانکشن‌های دکوریت شده در پلاگین‌ها
-        const decoratedMatch = content.match(new RegExp(`fastify\\.decorate\\s*\\(\\s*['"]${handlerName}['"]\\s*,\\s*(${handlerName})\\s*\\)`))
-        if (decoratedMatch) {
-          console.log('✅ Found decorated handler in:', file)
+        // First search in plugins directory
+        if (fs.existsSync(pluginsDir)) {
+            const files = await getAllFiles(pluginsDir)
+            console.log('🔍 Searching in plugins directory:', pluginsDir)
 
-          // پیدا کردن شروع فانکشن
-          const functionStart = content.indexOf(`async function ${handlerName}`)
-          if (functionStart === -1) continue
+            for (const file of files) {
+                const content = fs.readFileSync(file, 'utf-8')
 
-          // پیدا کردن پایان فانکشن
-          let braceCount = 0
-          let functionEnd = functionStart
+                // Look for decorated handlers in plugins
+                const decoratedMatch = content.match(new RegExp(`fastify\\.decorate\\s*\\(\\s*['"]${realHandlerName}['"]\\s*,\\s*(${realHandlerName})\\s*\\)`))
+                if (decoratedMatch) {
+                    console.log('✅ Found decorated handler in:', file)
 
-          for (let i = functionStart; i < content.length; i++) {
-            if (content[i] === '{') braceCount++
-            if (content[i] === '}') {
-              braceCount--
-              if (braceCount === 0) {
-                functionEnd = i + 1
-                break
-              }
+                    // Find the function definition
+                    const functionStart = content.indexOf(`async function ${realHandlerName}`)
+                    if (functionStart === -1) continue
+
+                    // Find the end of the function
+                    let braceCount = 0
+                    let functionEnd = functionStart
+
+                    for (let i = functionStart; i < content.length; i++) {
+                        if (content[i] === '{') braceCount++
+                        if (content[i] === '}') {
+                            braceCount--
+                            if (braceCount === 0) {
+                                functionEnd = i + 1
+                                break
+                            }
+                        }
+                    }
+
+                    if (functionEnd > functionStart) {
+                        const functionCode = content.slice(functionStart, functionEnd)
+                        console.log('✅ Found function definition for:', realHandlerName)
+                        return functionCode
+                    }
+                }
             }
-          }
-
-          if (functionEnd > functionStart) {
-            const functionCode = content.slice(functionStart, functionEnd)
-            console.log('✅ Found function definition for:', handlerName)
-            return functionCode
-          }
+        } else {
+            console.warn('⚠️ Plugins directory not found:', pluginsDir)
         }
-      }
-    } else {
-      console.warn('⚠️ Plugins directory not found:', pluginsDir)
+
+        // If not found in plugins, search in the base directory
+        const files = await getAllFiles(baseDir)
+        console.log('🔍 Searching in base directory:', baseDir)
+
+        for (const file of files) {
+            const content = fs.readFileSync(file, 'utf-8')
+
+            // Look for inline handlers
+            const inlineHandlerMatch = content.match(new RegExp(`async\\s+function\\s+${realHandlerName}\\s*\\([^)]*\\)\\s*\\{`))
+            if (inlineHandlerMatch && inlineHandlerMatch.index !== undefined) {
+                console.log('✅ Found inline handler in:', file)
+
+                // Find the start and end of the function
+                const functionStart = inlineHandlerMatch.index
+                let braceCount = 0
+                let functionEnd = functionStart
+
+                for (let i = functionStart; i < content.length; i++) {
+                    if (content[i] === '{') braceCount++
+                    if (content[i] === '}') {
+                        braceCount--
+                        if (braceCount === 0) {
+                            functionEnd = i + 1
+                            break
+                        }
+                    }
+                }
+
+                if (functionEnd > functionStart) {
+                    const functionCode = content.slice(functionStart, functionEnd)
+                    console.log('✅ Found function definition for:', realHandlerName)
+                    return functionCode
+                }
+            }
+        }
+
+        // If not found, wait a bit before trying again
+        await new Promise(resolve => setTimeout(resolve, 100))
     }
 
-    // اگر در پلاگین‌ها پیدا نشد، در روت مشخص شده جستجو کن
-    const files = await getAllFiles(baseDir)
-
-    for (const file of files) {
-      const content = fs.readFileSync(file, 'utf-8')
-
-      // پیدا کردن شروع فانکشن
-      const functionStart = content.indexOf(`async function ${handlerName}`)
-      if (functionStart === -1) continue
-
-      // پیدا کردن پایان فانکشن
-      let braceCount = 0
-      let functionEnd = functionStart
-
-      for (let i = functionStart; i < content.length; i++) {
-        if (content[i] === '{') braceCount++
-        if (content[i] === '}') {
-          braceCount--
-          if (braceCount === 0) {
-            functionEnd = i + 1
-            break
-          }
-        }
-      }
-
-      if (functionEnd > functionStart) {
-        const functionCode = content.slice(functionStart, functionEnd)
-        console.log('✅ Found handler in route file:', file)
-        return functionCode
-      }
-    }
-
-    console.warn('⚠️ Handler not found:', handlerName)
+    console.warn('⚠️ Handler not found after', maxSearches, 'attempts:', realHandlerName)
     return null
   }
 
