@@ -3,8 +3,9 @@ import fs from 'fs'
 import JSON5 from 'json5'
 import { OpenAI } from 'openai'
 import path from 'path'
-import { FastifyGptSwagger, PluginOptions } from './types'
+import { generatePrompt } from './prompt'
 import { swaggerHtml } from './swagger'
+import { FastifyGptSwagger, PluginOptions } from './types'
 
 
 declare module 'fastify' {
@@ -247,10 +248,14 @@ async function scanRoutesAndGenerateSwagger({
             }
           }
 
+          // اضافه کردن پوشه‌های میانی به مسیر
+          const fullRoute = path.join(baseRoute, route).replace(/\\/g, '/')
+          const finalRoute = fullRoute.startsWith('/') ? fullRoute : '/' + fullRoute
+
           // اضافه کردن روت به لیست
           endpoints.push({
             method,
-            route: '/' + path.join(baseRoute, route).replace(/\\/g, '/'),
+            route: finalRoute,
             handlerCode: finalHandlerCode,
             schema
           })
@@ -284,78 +289,19 @@ async function scanRoutesAndGenerateSwagger({
         continue
       }
 
-      // در غیر این صورت از GPT استفاده کن
-      const prompt = `
-این یک فانکشن روت از فریمورک Fastify است. لطفاً براساس آن، یک JSON Schema برای درخواست (query, body, params) و پاسخ خروجی بنویس.
+      const prompt = generatePrompt(handlerCode)
+      let result = await getValidJsonFromGPT(openai, prompt, 3, gptModel);
 
-مهم: لطفاً فقط یک JSON object برگردانید، بدون هیچ توضیح اضافی. فرمت JSON باید دقیقاً به این شکل باشد:
-
-{
-  "requestBody": {
-    "content": {
-      "application/json": {
-        "schema": {
-          "type": "object",
-          "properties": {},
-          "required": []
+      if (result.responses['401'] || result.responses['403']) {
+        result = {
+          ...result,
+          security: [
+            {
+              bearerAuth: []
+            }
+          ]
         }
       }
-    }
-  },
-  "parameters": [
-    {
-      "name": "paramName",
-      "in": "path",
-      "schema": {
-        "type": "string",
-        "description": "توضیحات پارامتر"
-      },
-      "required": true
-    }
-  ],
-  "responses": {
-    "200": {
-      "description": "پاسخ موفق",
-      "content": {
-        "application/json": {
-          "schema": {
-            "type": "object",
-            "properties": {},
-            "required": [],
-            "additionalProperties": false
-          }
-        }
-      }
-    }
-  }
-}
-
-نکات مهم:
-1. فقط JSON برگردانید، بدون هیچ متن اضافی
-2. از $id استفاده نکنید، از id استفاده کنید
-3. از type به جای format استفاده کنید
-4. از additionalProperties: false استفاده کنید
-5. از کاماهای درست استفاده کنید
-6. از کوتیشن دوتایی برای کلیدها استفاده کنید
-7. برای تشخیص پارامترها:
-   - به دنبال متغیرهایی در مسیر URL بگردید (مثل :id یا {id})
-   - به دنبال متغیرهایی در query parameters بگردید
-   - به دنبال متغیرهایی در body بگردید
-   - به دنبال متغیرهایی که در کد استفاده شده‌اند بگردید
-8. برای هر پارامتر:
-   - نام دقیق پارامتر را از کد استخراج کنید
-   - نوع داده مناسب را تعیین کنید
-   - توضیحات مناسب را بر اساس استفاده در کد بنویسید
-9. برای پاسخ‌ها:
-   - به دنبال return یا reply در کد بگردید
-   - ساختار داده برگشتی را تحلیل کنید
-   - فیلدهای اجباری و اختیاری را مشخص کنید
-
-کد روت:
-${handlerCode}
-      `
-
-      const result = await getValidJsonFromGPT(openai, prompt, 3, gptModel);
       swaggerPaths[route] = {
         [method]: {
           ...result,
@@ -378,7 +324,15 @@ ${handlerCode}
     },
     paths: swaggerPaths,
     components: {
-      schemas: {}
+      schemas: {},
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Authorization token'
+        }
+      }
     },
     validators
   }
@@ -472,7 +426,7 @@ const fastifyGptSwagger: FastifyGptSwagger = async function (
   fastify.get(`/swagger-gpt-docs/json`, async (request, reply) => {
     try {
       const swaggerPath = path.join(process.cwd(), 'swagger', 'swagger.json');
-      console.log('🔍 swaggerPath:', swaggerPath)
+
       if (!fs.existsSync(swaggerPath)) {
         if (autoGenerate) {
           return reply.code(503).send({
@@ -507,7 +461,7 @@ const fastifyGptSwagger: FastifyGptSwagger = async function (
     }
   })
 
-  console.log(`📚 Fastify GPT Swagger documentation is available at: http://localhost:3000${swaggerUiPath}`)
+  console.log(`📚 Fastify GPT Swagger documentation is available at: ${swaggerUiPath}`)
 }
 
 export default fastifyGptSwagger
