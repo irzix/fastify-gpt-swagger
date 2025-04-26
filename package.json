@@ -1,6 +1,6 @@
 {
   "name": "fastify-gpt-swagger",
-  "version": "1.1.9",
+  "version": "1.1.10",
   "description": "A Fastify plugin that automatically generates Swagger documentation using GPT",
   "main": "dist/plugin.js",
   "types": "dist/plugin.d.ts",
@@ -20,13 +20,14 @@
   },
   "keywords": [
     "fastify",
+    "fastify-plugin",
     "swagger",
     "openapi",
     "gpt",
     "documentation",
     "validation"
   ],
-  "author": "Your Name",
+  "author": "Alireza Mohagheghi",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -37,9 +38,6 @@
   },
   "homepage": "https://github.com/irzix/fastify-gpt-swagger#readme",
   "dependencies": {
-    "@fastify/swagger": "^8.0.0",
-    "@fastify/swagger-ui": "^1.0.0",
-    "ajv": "^8.0.0",
     "fastify": "^4.0.0",
     "json5": "^2.0.0",
     "openai": "^4.0.0"
