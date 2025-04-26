@@ -237,7 +237,7 @@ async function scanRoutesAndGenerateSwagger({
   }
 
   // تابع بازگشتی برای اسکن پوشه‌ها
-  async function scanDirectory(dir: string, baseRoute: string = '') {
+  async function scanDirectory(dir: string, rootDir: string = routesDir, scannedFiles: Set<string> = new Set()) {
     const files = fs.readdirSync(dir)
 
     for (const file of files) {
@@ -246,9 +246,15 @@ async function scanRoutesAndGenerateSwagger({
 
       if (stat.isDirectory()) {
         // اگر پوشه است، بازگشتی اسکن کن
-        const newBaseRoute = path.join(baseRoute, file)
-        await scanDirectory(fullPath, newBaseRoute)
+        await scanDirectory(fullPath, rootDir, scannedFiles)
       } else if (file.endsWith('.ts') || file.endsWith('.js')) {
+        // اگر فایل قبلاً اسکن شده، ازش رد شو
+        if (scannedFiles.has(fullPath)) {
+          console.log('⏩ Skipping already scanned file:', fullPath)
+          continue
+        }
+        scannedFiles.add(fullPath)
+
         // اگر فایل است، روت‌ها رو استخراج کن
         const content = fs.readFileSync(fullPath, 'utf-8')
 
@@ -256,7 +262,6 @@ async function scanRoutesAndGenerateSwagger({
         const routeMatches = content.matchAll(/(?:fastify\.|\.)(get|post|put|delete|patch)(?:<.*?>)?\(['\"`](.*?)['\"`],\s*(?:async\s*)?(?:\(.*?\)\s*=>\s*\{[\s\S]*?\}|([^,)]+)\))/g)
 
         for (const match of routeMatches) {
-
           const [_, method, route, handlerName] = match
 
           if(match.input.includes(`// fastify.${method}('${route}', ${handlerName})`) || match.input.includes(`// fastify.${method}('${route}',${handlerName})`)) {
@@ -269,7 +274,6 @@ async function scanRoutesAndGenerateSwagger({
           // اگر handlerName وجود داشت، سعی کن handler رو پیدا کنی
           let finalHandlerCode = ''
           if (handlerName) {
-
             // استخراج نام واقعی هندلر از fastify.cartsGet
             const realHandlerName = handlerName.replace(/^fastify\./, '').trim()
 
@@ -295,8 +299,9 @@ async function scanRoutesAndGenerateSwagger({
             }
           }
 
-          // اضافه کردن پوشه‌های میانی به مسیر
-          const fullRoute = path.join(baseRoute, route).replace(/\\/g, '/')
+          // محاسبه مسیر نسبی از rootDir
+          const relativePath = path.relative(rootDir, dir)
+          const fullRoute = path.join(relativePath, route).replace(/\\/g, '/')
           const finalRoute = fullRoute.startsWith('/') ? fullRoute : '/' + fullRoute
 
           // اضافه کردن روت به لیست
@@ -312,7 +317,7 @@ async function scanRoutesAndGenerateSwagger({
   }
 
   // شروع اسکن از پوشه اصلی
-  await scanDirectory(routesDir)
+  await scanDirectory(routesDir, routesDir)
 
 
   const openai = new OpenAI({
@@ -323,11 +328,13 @@ async function scanRoutesAndGenerateSwagger({
   const swaggerPaths: Record<string, any> = {}
   const validators: Record<string, Record<string, (request: any) => string[]>> = {}
 
+
   for (const { method, route, handlerCode, schema } of endpoints) {
     try {
       // اگر اسکیما از دکوریشن موجود بود، از اون استفاده کن
       if (schema) {
         swaggerPaths[route] = {
+          ...(swaggerPaths[route] || {}),
           [method]: {
             ...schema,
             summary: `Auto-generated from ${route}`
@@ -338,6 +345,7 @@ async function scanRoutesAndGenerateSwagger({
 
       const prompt = generatePrompt(handlerCode)
       let result = await getValidJsonFromGPT(openai, prompt, 3, gptModel);
+
 
       if (result.responses['401'] || result.responses['403']) {
         result = {
@@ -354,7 +362,10 @@ async function scanRoutesAndGenerateSwagger({
           [method]: (request: any) => validateToken(request)
         }
       }
+
+      console.log('result', route, method , swaggerPaths[route])
       swaggerPaths[route] = {
+        ...(swaggerPaths[route] || {}),
         [method]: {
           ...result,
           summary: `Auto-generated from ${route}`

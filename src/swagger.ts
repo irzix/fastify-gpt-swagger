@@ -132,9 +132,10 @@ export const swaggerHtml = `<!DOCTYPE html>
                     }
                 },
                 paths: currentEndpoints.reduce((acc, endpoint) => {
-                    acc[endpoint.path] = {
-                        [endpoint.method]: endpoint.details
-                    };
+                    if (!acc[endpoint.path]) {
+                        acc[endpoint.path] = {};
+                    }
+                    acc[endpoint.path][endpoint.method] = endpoint.details;
                     return acc;
                 }, {})
             };
