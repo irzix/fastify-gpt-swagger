@@ -28,12 +28,12 @@ const app = fastify()
 await app.register(fastifyGptSwagger, {
   openaiApiKey: 'your-api-key',
   routesDir: './routes', // Path to routes directory
-  pluginsDir: './src/plugins', // Path to plugins directory
-  gptModel: 'gpt-4', // GPT model to use
+  pluginsDir: './plugins', // Path to plugins directory
+  gptModel: 'gpt-4.1-nano', // GPT model to use (optional)
   autoGenerate: true, // Auto-generate documentation
-  swaggerUiPath: '/docs', // Swagger UI path
-  enableValidation: true, // Enable validation
-  openaiEndpoint: 'https://api.openai.com/v1' // OpenAI API endpoint
+  swaggerUiPath: '/docs', // Swagger UI path (optional)
+  enableValidation: true, // Enable validation (optional)
+  openaiEndpoint: 'https://api.openai.com/v1' // OpenAI API endpoint (optional)
 })
 
 // Start server
@@ -44,26 +44,15 @@ await app.listen({ port: 3000 })
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `openaiApiKey` | `string` | - | OpenAI API key (required) |
 | `routesDir` | `string` | `./routes` | Path to routes directory |
 | `pluginsDir` | `string` | `./src/plugins` | Path to plugins directory |
-| `gptModel` | `string` | `gpt-4` | GPT model to use |
 | `autoGenerate` | `boolean` | `false` | Auto-generate documentation |
-| `swaggerUiPath` | `string` | `/docs` | Swagger UI path |
+| `swaggerUiPath` | `string` | `/fastify-docs` | Swagger UI path |
 | `enableValidation` | `boolean` | `true` | Enable validation |
+| `openaiApiKey` | `string` | - | OpenAI API key (required) |
 | `openaiEndpoint` | `string` | - | OpenAI API endpoint |
+| `gptModel` | `string` | `gpt-4` | GPT model to use |
 
-## Example
-
-```typescript
-// routes/user.ts
-export default async function (fastify) {
-  fastify.get('/user/:id', async (request, reply) => {
-    const { id } = request.params
-    return { id, name: 'John Doe' }
-  })
-}
-```
 
 ## License
 

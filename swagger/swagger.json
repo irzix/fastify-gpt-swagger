@@ -6,7 +6,7 @@
     "description": "API documentation automatically generated using OpenAI GPT"
   },
   "paths": {
-    "cart/:id": {
+    "/cart/:id": {
       "get": {
         "requestBody": {
           "content": {
@@ -25,7 +25,7 @@
             "in": "path",
             "schema": {
               "type": "string",
-              "description": "این Id است که از طریق url ارسال می شود"
+              "description": "شناسه کارت سبد خرید"
             },
             "required": true
           },
@@ -34,7 +34,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "description": "این user هست که در query parameters قرار گرفته است"
+              "description": "شناسه کاربر"
             },
             "required": true
           }
@@ -48,38 +48,81 @@
                   "type": "object",
                   "properties": {
                     "status": {
-                      "type": "boolean",
-                      "description": "وضعیت درخواست"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "پیامی که در صورت خطا نمایش داده می شود"
+                      "type": "boolean"
                     },
                     "result": {
                       "type": "object",
-                      "description": "داده هایی که قرار است بگیریم",
                       "properties": {
                         "_id": {
-                          "type": "string",
-                          "description": "آی‌دی"
+                          "type": "string"
                         },
                         "user": {
-                          "type": "string",
-                          "description": "کاربر"
+                          "type": "string"
                         },
                         "name": {
-                          "type": "string",
-                          "description": "نام"
+                          "type": "string"
                         },
                         "price": {
-                          "type": "number",
-                          "description": "قیمت"
+                          "type": "number"
                         }
-                      }
+                      },
+                      "required": [
+                        "_id",
+                        "user",
+                        "name",
+                        "price"
+                      ]
                     }
                   },
                   "required": [
-                    "status"
+                    "status",
+                    "result"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "خطای درخواست نادرست",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "خطای داخلی سرور",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "message"
                   ],
                   "additionalProperties": false
                 }
@@ -87,10 +130,10 @@
             }
           }
         },
-        "summary": "Auto-generated from cart/:id"
+        "summary": "Auto-generated from /cart/:id"
       }
     },
-    "cart/": {
+    "/cart/": {
       "get": {
         "requestBody": {
           "content": {
@@ -106,15 +149,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Successful response",
+            "description": "پاسخ موفق",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "status": {
-                      "type": "boolean",
-                      "description": "The status of the response"
+                      "type": "boolean"
                     },
                     "result": {
                       "type": "array",
@@ -122,25 +164,25 @@
                         "type": "object",
                         "properties": {
                           "_id": {
-                            "type": "string",
-                            "description": "The ID of the cart"
+                            "type": "string"
                           },
                           "name": {
-                            "type": "string",
-                            "description": "The name of the item in the cart"
+                            "type": "string"
                           },
                           "price": {
-                            "type": "integer",
-                            "description": "The price of the item in the cart"
+                            "type": "number"
                           }
                         },
                         "required": [
                           "_id",
                           "name",
                           "price"
-                        ]
-                      },
-                      "description": "The result array containing cart details"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "message": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -151,34 +193,9 @@
                 }
               }
             }
-          },
-          "500": {
-            "description": "Error response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "boolean",
-                      "description": "The status of the response"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "The error message"
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "message"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
           }
         },
-        "summary": "Auto-generated from cart/"
+        "summary": "Auto-generated from /cart/"
       }
     }
   },
