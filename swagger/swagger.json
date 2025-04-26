@@ -25,7 +25,7 @@
             "in": "path",
             "schema": {
               "type": "string",
-              "description": "شناسه کارت سبد خرید"
+              "description": "شناسه سبد خرید"
             },
             "required": true
           },
@@ -34,7 +34,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "description": "شناسه کاربر"
+              "description": "شناسه کاربر (اجباری)"
             },
             "required": true
           }
@@ -71,7 +71,8 @@
                         "user",
                         "name",
                         "price"
-                      ]
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
@@ -84,7 +85,7 @@
             }
           },
           "400": {
-            "description": "خطای درخواست نادرست",
+            "description": "درخواست نامعتبر، اگر پارامتر user ارسال نشود",
             "content": {
               "application/json": {
                 "schema": {
@@ -163,18 +164,18 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "_id": {
+                          "id": {
                             "type": "string"
                           },
                           "name": {
                             "type": "string"
                           },
                           "price": {
-                            "type": "number"
+                            "type": "integer"
                           }
                         },
                         "required": [
-                          "_id",
+                          "id",
                           "name",
                           "price"
                         ],

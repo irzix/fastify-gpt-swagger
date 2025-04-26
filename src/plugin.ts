@@ -4,6 +4,7 @@ import JSON5 from 'json5'
 import { OpenAI } from 'openai'
 import path from 'path'
 import { FastifyGptSwagger, PluginOptions } from './types'
+import { swaggerHtml } from './swagger'
 
 
 declare module 'fastify' {
@@ -470,7 +471,8 @@ const fastifyGptSwagger: FastifyGptSwagger = async function (
   // روت برای دریافت JSON Swagger
   fastify.get(`/swagger-gpt-docs/json`, async (request, reply) => {
     try {
-      const swaggerPath = path.join(process.cwd(), 'swagger', 'swagger.json')
+      const swaggerPath = path.join(process.cwd(), 'swagger', 'swagger.json');
+      console.log('🔍 swaggerPath:', swaggerPath)
       if (!fs.existsSync(swaggerPath)) {
         if (autoGenerate) {
           return reply.code(503).send({
@@ -495,14 +497,7 @@ const fastifyGptSwagger: FastifyGptSwagger = async function (
   // روت برای نمایش Swagger UI
   fastify.get(swaggerUiPath, async (request, reply) => {
     try {
-      const htmlPath = path.join(process.cwd(), 'swagger', 'swagger.html')
-      if (!fs.existsSync(htmlPath)) {
-        return reply.code(404).send({
-          error: 'Swagger UI not found'
-        })
-      }
-
-      const htmlContent = fs.readFileSync(htmlPath, 'utf-8')
+      const htmlContent = swaggerHtml;
       return reply.type('text/html').send(htmlContent)
     } catch (error) {
       console.error('❌ Error reading swagger.html:', error)
