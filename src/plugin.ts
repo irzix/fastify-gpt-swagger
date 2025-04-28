@@ -363,7 +363,6 @@ async function scanRoutesAndGenerateSwagger({
         }
       }
 
-      console.log('result', route, method , swaggerPaths[route])
       swaggerPaths[route] = {
         ...(swaggerPaths[route] || {}),
         [method]: {

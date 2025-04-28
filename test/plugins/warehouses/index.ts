@@ -1,5 +1,3 @@
-'use strict'
-
 import { FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 

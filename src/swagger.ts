@@ -1,4 +1,3 @@
-// @ts-nocheck
 export const swaggerHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
