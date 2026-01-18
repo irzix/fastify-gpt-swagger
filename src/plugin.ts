@@ -14,20 +14,20 @@ declare module 'fastify' {
   }
 }
 
-function extractOpenAPISpec(text: string) {
-  // ۱. پیدا کردن اولین بلوک {...}
+export function extractOpenAPISpec(text: string) {
+  // 1. Find the first {...} block
   const match = text.match(/\{[\s\S]*\}$/m) || text.match(/\{[\s\S]*?\}/m);
   if (!match) {
     throw new Error('No JSON object found in the input text.');
   }
   const jsonString = match[0];
 
-  // ۲. تلاش برای پارس با JSON.parse
+  // 2. Try to parse with JSON.parse
   let obj;
   try {
     obj = JSON.parse(jsonString);
   } catch (e) {
-    // ۳. اگر شکست خورد، با JSON5 سعی کن
+    // 3. If failed, try with JSON5
     try {
       obj = JSON5.parse(jsonString);
     } catch (e2) {
@@ -35,12 +35,12 @@ function extractOpenAPISpec(text: string) {
     }
   }
 
-  // ۴. استخراج فیلدهای مدنظر
+  // 4. Extract required fields
   const { requestBody, parameters, responses } = obj;
   return { requestBody, parameters, responses };
 }
 
-async function getValidJsonFromGPT(openai: OpenAI, prompt: string, maxRetries: number = 3, gptModel: string = 'gpt-4'): Promise<any> {
+export async function getValidJsonFromGPT(openai: OpenAI, prompt: string, maxRetries: number = 3, gptModel: string = 'gpt-4'): Promise<any> {
   let retries = 0;
   let lastError = null;
 
@@ -60,12 +60,12 @@ async function getValidJsonFromGPT(openai: OpenAI, prompt: string, maxRetries: n
     } catch (error) {
       lastError = error;
       retries++;
-      console.log(`🔄 Retry ${retries}/${maxRetries} for generating valid JSON`);
+      console.log(`Retry ${retries}/${maxRetries} for generating valid JSON`);
 
       if (retries < maxRetries) {
-        // اضافه کردن دستورالعمل‌های بیشتر برای GPT
-        prompt += '\n\nلطفاً دقت کنید که خروجی باید یک JSON معتبر باشد. از کاماهای درست استفاده کنید و از کوتیشن دوتایی برای کلیدها استفاده کنید.';
-        await new Promise(resolve => setTimeout(resolve, 1000)); // کمی صبر کن
+        // Add more instructions for GPT
+        prompt += '\n\nPlease ensure the output is valid JSON. Use correct commas and double quotes for keys.';
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait a bit
       }
     }
   }
@@ -73,7 +73,7 @@ async function getValidJsonFromGPT(openai: OpenAI, prompt: string, maxRetries: n
   throw lastError;
 }
 
-// تابع ولیدیشن برای چک کردن توکن
+// Token validation function
 function validateToken(request: any): string[] {
     const errors: string[] = []
     const authHeader = request.headers.authorization
@@ -83,8 +83,8 @@ function validateToken(request: any): string[] {
         return errors
     }
     
-    // اینجا می‌تونیم ولیدیشن‌های بیشتری اضافه کنیم
-    // مثلاً چک کردن فرمت توکن یا اعتبارسنجی آن
+    // Additional validations can be added here
+    // e.g., token format validation or token verification
 
     return errors
 }
@@ -108,9 +108,9 @@ async function scanRoutesAndGenerateSwagger({
 
   const endpoints: { method: string, route: string, handlerCode: string, schema?: any }[] = []
 
-  // تابع برای پیدا کردن handler از کدبیس
+  // Function to find handler from codebase
   async function findHandler(handlerName: string, baseDir: string): Promise<string | null> {
-    console.log('🔍 Searching for handler:', handlerName)
+    console.log('Searching for handler:', handlerName)
     let searchCount = 0
     const maxSearches = 5
 
@@ -119,12 +119,12 @@ async function scanRoutesAndGenerateSwagger({
 
     while (searchCount < maxSearches) {
         searchCount++
-        console.log(`🔄 Search attempt ${searchCount}/${maxSearches}`)
+        console.log(`Search attempt ${searchCount}/${maxSearches}`)
 
         // First search in plugins directory
         if (fs.existsSync(pluginsDir)) {
             const files = await getAllFiles(pluginsDir)
-            console.log('🔍 Searching in plugins directory:', pluginsDir)
+            console.log('Searching in plugins directory:', pluginsDir)
 
             for (const file of files) {
                 const content = fs.readFileSync(file, 'utf-8')
@@ -134,12 +134,12 @@ async function scanRoutesAndGenerateSwagger({
                 if (decoratedMatch) {
                     const [_, functionName] = decoratedMatch
                     const cleanFunctionName = functionName.trim()
-                    console.log('✅ Found decorator for:', realHandlerName, 'with function name:', cleanFunctionName)
+                    console.log('Found decorator for:', realHandlerName, 'with function name:', cleanFunctionName)
 
                     // Now search for the function definition
                     const functionStart = content.indexOf(`async function ${cleanFunctionName}`)
                     if (functionStart === -1) {
-                        console.log('⚠️ Could not find function definition for:', cleanFunctionName)
+                        console.log('Could not find function definition for:', cleanFunctionName)
                         continue
                     }
 
@@ -160,18 +160,18 @@ async function scanRoutesAndGenerateSwagger({
 
                     if (functionEnd > functionStart) {
                         const functionCode = content.slice(functionStart, functionEnd)
-                        console.log('✅ Found function definition for:', cleanFunctionName)
+                        console.log('Found function definition for:', cleanFunctionName)
                         return functionCode
                     }
                 }
             }
         } else {
-            console.warn('⚠️ Plugins directory not found:', pluginsDir)
+            console.warn('Plugins directory not found:', pluginsDir)
         }
 
         // If not found in plugins, search in the base directory
         const files = await getAllFiles(baseDir)
-        console.log('🔍 Searching in base directory:', baseDir)
+        console.log('Searching in base directory:', baseDir)
 
         for (const file of files) {
             const content = fs.readFileSync(file, 'utf-8')
@@ -179,7 +179,7 @@ async function scanRoutesAndGenerateSwagger({
             // Look for inline handlers
             const inlineHandlerMatch = content.match(new RegExp(`async\\s+function\\s+${realHandlerName}\\s*\\([^)]*\\)\\s*\\{`))
             if (inlineHandlerMatch && inlineHandlerMatch.index !== undefined) {
-                console.log('✅ Found inline handler in:', file)
+                console.log('Found inline handler in:', file)
 
                 // Find the start and end of the function
                 const functionStart = inlineHandlerMatch.index
@@ -199,7 +199,7 @@ async function scanRoutesAndGenerateSwagger({
 
                 if (functionEnd > functionStart) {
                     const functionCode = content.slice(functionStart, functionEnd)
-                    console.log('✅ Found function definition for:', realHandlerName)
+                    console.log('Found function definition for:', realHandlerName)
                     return functionCode
                 }
             }
@@ -209,11 +209,11 @@ async function scanRoutesAndGenerateSwagger({
         await new Promise(resolve => setTimeout(resolve, 100))
     }
 
-    console.warn('⚠️ Handler not found after', maxSearches, 'attempts:', realHandlerName)
+    console.warn('Handler not found after', maxSearches, 'attempts:', realHandlerName)
     return null
   }
 
-  // تابع برای پیدا کردن همه فایل‌ها
+  // Function to find all files
   async function getAllFiles(dir: string): Promise<string[]> {
     const files: string[] = []
 
@@ -236,7 +236,7 @@ async function scanRoutesAndGenerateSwagger({
     return files
   }
 
-  // تابع بازگشتی برای اسکن پوشه‌ها
+  // Recursive function to scan directories
   async function scanDirectory(dir: string, rootDir: string = routesDir, scannedFiles: Set<string> = new Set()) {
     const files = fs.readdirSync(dir)
 
@@ -245,66 +245,66 @@ async function scanRoutesAndGenerateSwagger({
       const stat = fs.statSync(fullPath)
 
       if (stat.isDirectory()) {
-        // اگر پوشه است، بازگشتی اسکن کن
+        // If directory, scan recursively
         await scanDirectory(fullPath, rootDir, scannedFiles)
       } else if (file.endsWith('.ts') || file.endsWith('.js')) {
-        // اگر فایل قبلاً اسکن شده، ازش رد شو
+        // Skip if file already scanned
         if (scannedFiles.has(fullPath)) {
-          console.log('⏩ Skipping already scanned file:', fullPath)
+          console.log('Skipping already scanned file:', fullPath)
           continue
         }
         scannedFiles.add(fullPath)
 
-        // اگر فایل است، روت‌ها رو استخراج کن
+        // If file, extract routes
         const content = fs.readFileSync(fullPath, 'utf-8')
 
-        // پیدا کردن روت‌ها و دکوریشن‌ها
+        // Find routes and decorations
         const routeMatches = content.matchAll(/(?:fastify\.|\.)(get|post|put|delete|patch)(?:<.*?>)?\(['\"`](.*?)['\"`],\s*(?:async\s*)?(?:\(.*?\)\s*=>\s*\{[\s\S]*?\}|([^,)]+)\))/g)
 
         for (const match of routeMatches) {
           const [_, method, route, handlerName] = match
 
           if(match.input.includes(`// fastify.${method}('${route}', ${handlerName})`) || match.input.includes(`// fastify.${method}('${route}',${handlerName})`)) {
-            console.log('🔍 Skipping route:', { method, route, handlerName })
+            console.log('Skipping route:', { method, route, handlerName })
             continue;
           }
 
-          console.log('🔍 Found route:', { method, route, handlerName })
+          console.log('Found route:', { method, route, handlerName })
 
-          // اگر handlerName وجود داشت، سعی کن handler رو پیدا کنی
+          // If handlerName exists, try to find the handler
           let finalHandlerCode = ''
           if (handlerName) {
-            // استخراج نام واقعی هندلر از fastify.cartsGet
+            // Extract real handler name from fastify.cartsGet
             const realHandlerName = handlerName.replace(/^fastify\./, '').trim()
 
-            // اول در پلاگین‌ها جستجو کن
+            // First search in plugins
             const foundHandler = await findHandler(realHandlerName, dir)
             if (foundHandler) {
               finalHandlerCode = foundHandler
             } else {
-              // اگر هندلر رو پیدا نکردی، لاگ کن
-              console.warn(`⚠️ Could not find handler for route ${route}: ${realHandlerName}`)
+              // If handler not found, log warning
+              console.warn(`Could not find handler for route ${route}: ${realHandlerName}`)
               continue
             }
           }
 
-          // پیدا کردن اسکیما از دکوریشن‌ها
+          // Find schema from decorations
           const schemaMatch = content.match(/@fastify\.schema\(([\s\S]*?)\)/m)
           let schema = null
           if (schemaMatch) {
             try {
               schema = JSON5.parse(schemaMatch[1])
             } catch (e) {
-              console.warn(`⚠️ Could not parse schema for route ${route}:`, e)
+              console.warn(`Could not parse schema for route ${route}:`, e)
             }
           }
 
-          // محاسبه مسیر نسبی از rootDir
+          // Calculate relative path from rootDir
           const relativePath = path.relative(rootDir, dir)
           const fullRoute = path.join(relativePath, route).replace(/\\/g, '/')
           const finalRoute = fullRoute.startsWith('/') ? fullRoute : '/' + fullRoute
 
-          // اضافه کردن روت به لیست
+          // Add route to list
           endpoints.push({
             method,
             route: finalRoute,
@@ -316,7 +316,7 @@ async function scanRoutesAndGenerateSwagger({
     }
   }
 
-  // شروع اسکن از پوشه اصلی
+  // Start scanning from root directory
   await scanDirectory(routesDir, routesDir)
 
 
@@ -331,7 +331,7 @@ async function scanRoutesAndGenerateSwagger({
 
   for (const { method, route, handlerCode, schema } of endpoints) {
     try {
-      // اگر اسکیما از دکوریشن موجود بود، از اون استفاده کن
+      // If schema from decoration exists, use it
       if (schema) {
         swaggerPaths[route] = {
           ...(swaggerPaths[route] || {}),
@@ -356,7 +356,7 @@ async function scanRoutesAndGenerateSwagger({
             }
           ]
         }
-        // اضافه کردن ولیدیشن توکن
+        // Add token validation
         validators[route] = {
           ...validators[route],
           [method]: (request: any) => validateToken(request)
@@ -372,7 +372,7 @@ async function scanRoutesAndGenerateSwagger({
       }
 
     } catch (error) {
-      console.error(`❌ Error processing route ${route} after all retries:`, error)
+      console.error(`Error processing route ${route} after all retries:`, error)
       continue
     }
   }
@@ -400,7 +400,7 @@ async function scanRoutesAndGenerateSwagger({
   }
 }
 
-async function saveSwaggerJson(swaggerJson: any, outputDir: string = './swagger') {
+export async function saveSwaggerJson(swaggerJson: any, outputDir: string = './swagger') {
   try {
     // Create output directory if it doesn't exist
     if (!fs.existsSync(outputDir)) {
@@ -410,9 +410,9 @@ async function saveSwaggerJson(swaggerJson: any, outputDir: string = './swagger'
     // Save the JSON file
     const outputPath = path.join(outputDir, 'swagger.json')
     fs.writeFileSync(outputPath, JSON.stringify(swaggerJson, null, 2))
-    console.log(`✅ Swagger JSON saved to ${outputPath}`)
+    console.log(`Swagger JSON saved to ${outputPath}`)
   } catch (error) {
-    console.error('❌ Error saving Swagger JSON:', error)
+    console.error('Error saving Swagger JSON:', error)
   }
 }
 
@@ -440,7 +440,7 @@ const fastifyGptSwagger: FastifyGptSwagger = async function (
 
   // Auto-generate documentation if enabled
   if (autoGenerate) {
-    console.log('🚀 Auto-generating Swagger documentation...')
+    console.log('Auto-generating Swagger documentation...')
     setImmediate(async () => {
       try {
         const result = await scanRoutesAndGenerateSwagger({
@@ -452,18 +452,18 @@ const fastifyGptSwagger: FastifyGptSwagger = async function (
         })
         swaggerJson = result
         validators = result.validators
-        console.log('✅ Swagger documentation generated successfully')
+        console.log('Swagger documentation generated successfully')
 
         // Save the generated JSON
         await saveSwaggerJson(swaggerJson)
 
       } catch (error) {
-        console.error('❌ Error in auto-generating documentation:', error)
+        console.error('Error in auto-generating documentation:', error)
       }
     })
   }
 
-  // اضافه کردن هوک برای ولیدیشن
+  // Add hook for validation
   if (enableValidation) {
     fastify.addHook('preHandler', async (request, reply) => {
       if (!validators) return
@@ -484,7 +484,7 @@ const fastifyGptSwagger: FastifyGptSwagger = async function (
     })
   }
 
-  // روت برای دریافت JSON Swagger
+  // Route to get Swagger JSON
   fastify.get(`/swagger-gpt-docs/json`, async (request, reply) => {
     try {
       const swaggerPath = path.join(process.cwd(), 'swagger', 'swagger.json');
@@ -503,27 +503,27 @@ const fastifyGptSwagger: FastifyGptSwagger = async function (
       const swaggerContent = fs.readFileSync(swaggerPath, 'utf-8')
       return reply.type('application/json').send(swaggerContent)
     } catch (error) {
-      console.error('❌ Error reading swagger.json:', error)
+      console.error('Error reading swagger.json:', error)
       return reply.code(500).send({
         error: 'Failed to read swagger documentation'
       })
     }
   })
 
-  // روت برای نمایش Swagger UI
+  // Route to display Swagger UI
   fastify.get(swaggerUiPath, async (request, reply) => {
     try {
       const htmlContent = swaggerHtml;
       return reply.type('text/html').send(htmlContent)
     } catch (error) {
-      console.error('❌ Error reading swagger.html:', error)
+      console.error('Error reading swagger.html:', error)
       return reply.code(500).send({
         error: 'Failed to read swagger UI'
       })
     }
   })
 
-  console.log(`📚 Fastify GPT Swagger documentation is available at: ${swaggerUiPath}`)
+  console.log(`Fastify GPT Swagger documentation is available at: ${swaggerUiPath}`)
 }
 
 export default fastifyGptSwagger
