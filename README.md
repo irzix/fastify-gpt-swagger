@@ -13,7 +13,6 @@ A Fastify tool for automatically generating Swagger documentation using static a
 - **Optional GPT Enhancement**: Improve documentation with AI (optional, not required)
 - **Smart Caching**: Cache GPT results to reduce costs
 - **CLI Tool**: Standalone CLI tool for generating documentation
-- **Plugin Support**: Backward compatible with existing plugin API
 - **Auto-detection**: Automatically detects routes, parameters, query params, body params
 - **Auth Detection**: Automatically detects authentication requirements
 - **Fast**: No API calls needed in static analysis mode
@@ -44,8 +43,6 @@ npm install -g fastify-gpt-swagger
 
 ## Usage
 
-### Method 1: CLI Tool (Recommended)
-
 Generate Swagger documentation using static analysis (no API key needed):
 
 ```bash
@@ -70,28 +67,6 @@ fastify-swagger-gen \
   --cache
 ```
 
-### Method 2: Plugin API (Backward Compatible)
-
-```typescript
-import fastify from 'fastify'
-import fastifyGptSwagger from 'fastify-gpt-swagger'
-
-const app = fastify()
-
-await app.register(fastifyGptSwagger, {
-  openaiApiKey: process.env.OPENAI_API_KEY, // Optional if not using GPT
-  routesDir: './routes',
-  pluginsDir: './plugins',
-  gptModel: 'gpt-4', // Optional
-  autoGenerate: true,
-  swaggerUiPath: '/docs',
-  enableValidation: true,
-  openaiEndpoint: 'https://api.openai.com/v1' // Optional
-})
-
-await app.listen({ port: 3000 })
-```
-
 ## CLI Options
 
 | Option | Type | Default | Description |
@@ -104,19 +79,6 @@ await app.listen({ port: 3000 })
 | `--openai-endpoint <url>` | `string` | - | OpenAI API endpoint |
 | `--cache` | `boolean` | `true` | Enable caching |
 | `--cache-dir <dir>` | `string` | `./.swagger-cache` | Cache directory |
-
-## Plugin Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `routesDir` | `string` | `./routes` | Path to routes directory |
-| `pluginsDir` | `string` | `./src/plugins` | Path to plugins directory |
-| `autoGenerate` | `boolean` | `false` | Auto-generate documentation |
-| `swaggerUiPath` | `string` | `/fastify-docs` | Swagger UI path |
-| `enableValidation` | `boolean` | `true` | Enable validation |
-| `openaiApiKey` | `string` | - | OpenAI API key (optional, only needed for GPT) |
-| `openaiEndpoint` | `string` | - | OpenAI API endpoint |
-| `gptModel` | `string` | `gpt-4` | GPT model to use |
 
 ## How It Works
 
@@ -184,28 +146,36 @@ The tool automatically generates:
 }
 ```
 
-## Migration from v1.x
+## Integration with Fastify
 
-If you were using the plugin API:
+After generating the Swagger documentation, use it with `@fastify/swagger`:
 
-**Before:**
-```typescript
-app.register(fastifyGptSwagger, {
-  openaiApiKey: process.env.OPENAI_KEY,
-  autoGenerate: true
-})
-```
-
-**After (Recommended):**
 ```bash
-# Generate once
+# Generate documentation
 fastify-swagger-gen --routes ./routes --plugins ./plugins
 
-# Use with @fastify/swagger
-app.register(require('@fastify/swagger'), {
+# Use in your Fastify app
+```
+
+```typescript
+import fastify from 'fastify'
+import swagger from '@fastify/swagger'
+import swaggerUi from '@fastify/swagger-ui'
+
+const app = fastify()
+
+await app.register(swagger, {
   mode: 'static',
-  specification: { path: './swagger/swagger.json' }
+  specification: {
+    path: './swagger/swagger.json'
+  }
 })
+
+await app.register(swaggerUi, {
+  routePrefix: '/docs'
+})
+
+await app.listen({ port: 3000 })
 ```
 
 ## Performance
@@ -240,5 +210,3 @@ MIT
 - Added caching mechanism
 - Much faster performance
 - Reduced costs (GPT is optional)
-
-See [IMPROVEMENTS.md](./IMPROVEMENTS.md) for detailed information about improvements. 
